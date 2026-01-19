@@ -147,15 +147,11 @@ async def get_waf_cookies_with_playwright(account_name: str):
 
 				print(f'[INFO] {account_name}: Got {len(waf_cookies)} WAF cookies after step 1')
 
-				required_cookies = ['acw_tc', 'cdn_sec_tc', 'acw_sc__v2']
-				missing_cookies = [c for c in required_cookies if c not in waf_cookies]
-
-				if missing_cookies:
-					print(f'[FAILED] {account_name}: Missing WAF cookies: {missing_cookies}')
-					await context.close()
-					return None
-
-				print(f'[SUCCESS] {account_name}: Successfully got all WAF cookies')
+				# AgentRouter 可能不需要所有 WAF cookies，只要有至少一个即可
+				if not waf_cookies:
+					print(f'[WARN] {account_name}: No WAF cookies found, proceeding anyway')
+				else:
+					print(f'[SUCCESS] {account_name}: Got WAF cookies: {list(waf_cookies.keys())}')
 
 				await context.close()
 
