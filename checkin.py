@@ -169,7 +169,13 @@ def get_user_info(client, headers):
 		response = client.get('https://agentrouter.org/api/user/self', headers=headers, timeout=30)
 
 		if response.status_code == 200:
-			data = response.json()
+			# 检查响应内容是否为空
+			if not response.text or not response.text.strip():
+				return {'success': False, 'error': 'Empty response from API'}
+			try:
+				data = response.json()
+			except json.JSONDecodeError:
+				return {'success': False, 'error': f'Invalid JSON response: {response.text[:100]}'}
 			if data.get('success'):
 				user_data = data.get('data', {})
 				quota = round(user_data.get('quota', 0) / 500000, 2)
@@ -180,9 +186,10 @@ def get_user_info(client, headers):
 					'used_quota': used_quota,
 					'display': f':money: Current balance: ${quota}, Used: ${used_quota}'
 				}
-		return {'success': False, 'error': f'Failed to get user info: HTTP {response.status_code}'}
+			return {'success': False, 'error': f'API returned: {data.get("message", "Unknown error")}'}
+		return {'success': False, 'error': f'HTTP {response.status_code}: {response.text[:100] if response.text else "No content"}'}
 	except Exception as e:
-		return {'success': False, 'error': f'Failed to get user info: {str(e)[:50]}...'}
+		return {'success': False, 'error': f'Failed to get user info: {str(e)[:100]}'}
 
 
 async def check_in_account(account_info, account_index):
